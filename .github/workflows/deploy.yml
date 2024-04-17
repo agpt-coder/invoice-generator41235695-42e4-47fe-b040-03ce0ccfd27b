@@ -30,18 +30,22 @@ jobs:
     - name: Configure Docker
       run: |
         gcloud auth configure-docker
-    
-    - name: Set up Cloud SQL Proxy
+        
+    - name: Authenticate to Google Cloud using Workload Identity
+      uses: google-github-actions/auth@v0.4.0
+      with:
+        workload_identity_provider: ${{ secrets.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_EMAIL }}
+
+    - name: Install Cloud SQL Proxy
       run: |
-        echo "${{ secrets.GCP_CREDENTIALS }}" > /tmp/gcp-key.json
-        cat /tmp/gcp-key.json
         wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
         chmod +x cloud_sql_proxy
-        ./cloud_sql_proxy -instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }}=tcp:5432 -credential_file=/tmp/gcp-key.json &
-        sleep 5  # Ensures proxy has time to start
-        cat cloud_sql_proxy.log
-      env:
-        CLOUD_SQL_CONNECTION_NAME: ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+
+    - name: Start Cloud SQL Proxy
+      run: |
+        ./cloud_sql_proxy -instances=${{ secrets.CLOUD_SQL_CONNECTION_NAME }}=tcp:5432 &
+        sleep 10  # Wait for the Cloud SQL Proxy to be fully ready
     
     - name: Run Migrations
       run: |
