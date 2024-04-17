@@ -35,8 +35,9 @@ jobs:
         gcloud auth configure-docker
         
     - name: Authenticate to Google Cloud using Workload Identity
-      uses: google-github-actions/auth@v0.4.0
+      uses: google-github-actions/auth@v1
       with:
+        token_format: 'access_token'
         create_credentials_file: 'true'
         workload_identity_provider: ${{ secrets.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_EMAIL }}
