@@ -43,6 +43,7 @@ jobs:
     
     - name: Run Migrations
       run: |
+        echo "Connecting to PostgreSQL at localhost:5432 with DB name ${{ secrets.DB_NAME }}"
         export DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASS }}@localhost:5432/${{ secrets.DB_NAME }}"
         npm install prisma -g
         prisma migrate deploy
