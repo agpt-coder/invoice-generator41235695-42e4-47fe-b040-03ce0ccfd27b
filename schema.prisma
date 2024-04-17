@@ -1,0 +1,144 @@
+// datasource db defines the database connection settings.
+// It is configured for PostgreSQL and uses an environment variable for the connection URL.
+// The 'extensions' feature enables the use of PostgreSQL-specific data types.
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+}
+
+// generator db configures Prisma Client settings.
+// It is set up to use Prisma Client Python with asyncio interface and specific features.
+generator db {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+  previewFeatures      = ["postgresqlExtensions"]
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  UserProfile UserProfile?
+  Invoices    Invoice[]
+  Payments    Payment[]
+}
+
+model UserProfile {
+  id          String  @id @default(dbgenerated("gen_random_uuid()"))
+  userId      String  @unique
+  firstName   String
+  lastName    String
+  companyName String?
+  address     String?
+  taxId       String?
+
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id          String  @id @default(dbgenerated("gen_random_uuid()"))
+  name        String
+  description String?
+
+  Rates         Rate[]
+  BillableItems BillableItem[]
+}
+
+model Rate {
+  id             String  @id @default(dbgenerated("gen_random_uuid()"))
+  serviceId      String
+  amount         Float
+  currency       String
+  variationCause String?
+
+  Service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  BillableItems BillableItem[]
+}
+
+model BillableItem {
+  id        String  @id @default(dbgenerated("gen_random_uuid()"))
+  invoiceId String
+  serviceId String
+  rateId    String
+  partId    String?
+
+  Invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Service Service @relation(fields: [serviceId], references: [id])
+  Rate    Rate    @relation(fields: [rateId], references: [id])
+  Part    Part?   @relation(fields: [partId], references: [id])
+}
+
+model Part {
+  id               String  @id @default(dbgenerated("gen_random_uuid()"))
+  name             String
+  description      String?
+  cost             Float
+  markupPercentage Float
+
+  BillableItems BillableItem[]
+}
+
+model Invoice {
+  id          String        @id @default(dbgenerated("gen_random_uuid()"))
+  userId      String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  dueDate     DateTime?
+  totalAmount Float
+  currency    String
+  status      InvoiceStatus
+  taxRateId   String?
+
+  User          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  BillableItems BillableItem[]
+  TaxRate       TaxRate?       @relation(fields: [taxRateId], references: [id])
+  Payments      Payment[]
+}
+
+model TaxRate {
+  id           String          @id @default(dbgenerated("gen_random_uuid()"))
+  name         String
+  percentage   Float
+  applicableTo TaxApplicableTo
+
+  Invoices Invoice[]
+}
+
+model Payment {
+  id            String   @id @default(dbgenerated("gen_random_uuid()"))
+  invoiceId     String
+  amount        Float
+  currency      String
+  paymentDate   DateTime
+  paymentMethod String
+  transactionId String?
+
+  Invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  User    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId  String?
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  CANCELLED
+}
+
+enum TaxApplicableTo {
+  SERVICE
+  GOODS
+  BOTH
+}
+
+enum Role {
+  ADMIN
+  USER
+  FINANCIAL_MANAGER
+}
+

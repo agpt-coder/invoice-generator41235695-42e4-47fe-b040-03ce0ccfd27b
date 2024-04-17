@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "invoice-generator"
+version = "0.1.0"
+description = "To generate comprehensive and transparent invoices that cater to varying services, billable hours, parts used, different rates, and applicable taxes, you must integrate the following practices and information garnered from previous interactions: "
+authors = ["AutoGPT <info@agpt.co>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+bcrypt = "^3.2.0"
+fastapi = "*"
+passlib = {version = "^1.7.4", extras = ["bcrypt"]}
+prisma = "*"
+pydantic = "*"
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+uvicorn = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
