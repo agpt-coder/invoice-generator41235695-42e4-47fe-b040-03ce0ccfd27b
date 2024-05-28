@@ -98,7 +98,7 @@ async def login_user(email: str, password: str) -> LoginUserOutput:
     Returns:
     LoginUserOutput: This model represents the response returned after successful user authentication, primarily consisting of the access token.
     """
-    user = await authenticate_user(email, password)
+    user = await attempt_authenticate_user(email, password)
     if not user:
         raise ValueError("Invalid authentication credentials.")
     access_token = await create_access_token(data={"sub": user.email})
