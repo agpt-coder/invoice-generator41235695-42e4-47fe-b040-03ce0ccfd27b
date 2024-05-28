@@ -113,34 +113,32 @@ async def api_post_initiate_payment(
         )
 
 
-@app.post(
-    "/register", response_model=project.register_user_service.UserRegistrationResponse
-)
-async def api_post_register_user(
-    email: str,
-    password: str,
-    first_name: Optional[str],
-    last_name: Optional[str],
-    company_name: Optional[str],
-    address: Optional[str],
-    tax_id: Optional[str],
-) -> project.register_user_service.UserRegistrationResponse | Response:
+@app.post("/login", response_model=project.login_user_service.LoginUserOutput)
+async def api_post_login_user(
+    password: str, email: str
+) -> project.login_user_service.LoginUserOutput | Response:
     """
-    Registers a new user.
+    Authenticates user and returns a token.
     """
+    if not email or not password:
+        error_message = "Email and password are required"
+        logger.warning(f"Login attempt with missing email or password: email={email}")
+        raise HTTPException(status_code=400, detail=error_message)
+
     try:
-        res = await project.register_user_service.register_user(
-            email, password, first_name, last_name, company_name, address, tax_id
-        )
+        res = await project.login_user_service.login_user(password, email)
         return res
+    except project.login_user_service.UserNotFoundException as e:
+        logger.error(f"User not found: {email}")
+        raise HTTPException(status_code=404, detail="User not found")
+    except project.login_user_service.InvalidCredentialsException as e:
+        logger.error(f"Invalid credentials for user: {email}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception as e:
-        logger.exception("Error processing request")
-        res = dict()
-        res["error"] = str(e)
-        return Response(
-            content=jsonable_encoder(res),
-            status_code=500,
-            media_type="application/json",
+        logger.exception(f"Unexpected error during login for user: {email}")
+        return JSONResponse(
+            content={"error": "Internal server error"},
+            status_code=500
         )
 
 
