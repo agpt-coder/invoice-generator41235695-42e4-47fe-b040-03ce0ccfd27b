@@ -5,7 +5,9 @@ import prisma.models
 from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
+import logging
 
+logger = logging.getLogger(__name__)
 
 class LoginUserOutput(BaseModel):
     """
